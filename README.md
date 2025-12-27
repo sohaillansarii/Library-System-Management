@@ -409,6 +409,25 @@ GROUP BY 1, 2
 **Task 18: Identify Members Issuing High-Risk Books**  
 Write a query to identify members who have issued books more than twice with the status "damaged" in the books table. Display the member name, book title, and the number of times they've issued damaged books.    
 
+```sql
+select 
+       m.member_name,
+	   b.book_title,
+       count( rs.book_quality) as damaged_status
+from return_status as rs
+join 
+issued_status as ist
+on ist.issued_id = rs.issued_id
+join
+members as m
+on ist.issued_member_id = m.member_id
+join
+books as b 
+on b.isbn = ist.issued_book_isbn
+where rs.book_quality ='Damaged'
+group by 1,2;
+
+```
 
 **Task 19: Stored Procedure**
 Objective:
@@ -478,14 +497,30 @@ WHERE isbn = '978-0-375-41398-8'
 **Task 20: Create Table As Select (CTAS)**
 Objective: Create a CTAS (Create Table As Select) query to identify overdue books and calculate fines.
 
-Description: Write a CTAS query to create a new table that lists each member and the books they have issued but not returned within 30 days. The table should include:
-    The number of overdue books.
-    The total fines, with each day's fine calculated at $0.50.
-    The number of books issued by each member.
+Description: Write a CTAS query to create a new table that lists each member and the books they have issued but not returned within 90 days. 
     The resulting table should show:
-    Member ID
-    Number of overdue books
+    Number of overdue books,
     Total fines
+```sql
+create table overdue_book_fines
+as
+ select 
+        ist.issued_id,
+		ist.issued_book_name,
+		ist.issued_date,
+		b.rental_price,
+		 (CURRENT_DATE - ist.issued_date - 90) AS overdue_days,
+        (CURRENT_DATE - ist.issued_date - 90) * b.rental_price AS total_fine
+ from issued_status as ist
+ join
+ books as b
+on ist.issued_book_isbn =b.isbn 
+where b.status ='yes' and ist.issued_date <= current_date - interval '90 days'
+order by 1,2;
+
+
+select * from overdue_book_fines;
+```
 
 
 
@@ -520,3 +555,4 @@ This project showcases SQL skills essential for database management and analysis
 - **Discord**: [Join our community for learning and collaboration](https://discord.gg/36h5f2Z5PK)
 
 Thank you for your interest in this project!
+
